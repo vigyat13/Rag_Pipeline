@@ -15,13 +15,14 @@ settings = get_settings()
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME)
 
-    origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://rag-pipeline-lake.vercel.app",
-    ]
+  origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    # Vercel frontend
+    "https://rag-pipeline-eat7-9p776ht0f-vigyat13s-projects.vercel.app",
+]
 
     app.add_middleware(
         CORSMiddleware,
