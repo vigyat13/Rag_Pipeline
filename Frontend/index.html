@@ -8,11 +8,34 @@
     <!-- Favicon (optional but recommended) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
 
+    <!-- Tailwind CDN (quick fix for styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#f0f9ff",
+                100: "#e0f2fe",
+                200: "#bae6fd",
+                300: "#7dd3fc",
+                400: "#38bdf8",
+                500: "#0ea5e9",
+                600: "#0284c7",
+                700: "#0369a1",
+                800: "#075985",
+                900: "#0c4a6e"
+              }
+            }
+          }
+        }
+      };
+    </script>
+
     <!-- Proper font include -->
-    <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       rel="preconnect"
       href="https://fonts.gstatic.com"
@@ -43,8 +66,7 @@
   >
     <div id="root"></div>
 
-    <!-- Vite entry point (adjust path if your entry file is different) -->
+    <!-- Vite entry point -->
     <script type="module" src="/index.tsx"></script>
-
   </body>
 </html>
