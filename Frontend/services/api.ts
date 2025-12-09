@@ -1,7 +1,7 @@
 // frontendrag/services/api.ts
 import axios, { AxiosError, AxiosResponse } from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "https://rag-pipeline-m6en.onrender.com";
 
 // 🔹 Axios instance used everywhere
 export const apiClient = axios.create({
