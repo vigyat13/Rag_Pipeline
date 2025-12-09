@@ -19,7 +19,8 @@ def create_app() -> FastAPI:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
-        "https://rag-pipeline-lake.vercel.app/",
+        "http://127.0.0.1:5173",
+        "https://rag-pipeline-lake.vercel.app",
     ]
 
     app.add_middleware(
@@ -43,3 +44,12 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "service": "advanced-rag-backend",
+        "message": "Backend is running.",
+    }
