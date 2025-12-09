@@ -8,7 +8,7 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
  *  - Prod (Vercel): use VITE_API_BASE_URL in .env
  */
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+  import.meta.env.VITE_API_BASE_URL || "https://rag-pipeline-m6en.onrender.com/api";
 
 // Low-level Axios client (internal only)
 const apiClient: AxiosInstance = axios.create({
