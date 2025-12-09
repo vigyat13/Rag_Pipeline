@@ -1,13 +1,8 @@
 // Frontend/services/api.ts
-import axios, {
-  AxiosError,
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-} from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const BASE_URL = "https://rag-pipeline-m6en.onrender.com/api";
+
 
 // ✅ Single axios client for the whole app
 const apiClient: AxiosInstance = axios.create({
