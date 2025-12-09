@@ -64,4 +64,65 @@ Perfect for debugging and evaluating RAG performance.
 ---
 
 ## 🧠 **System Architecture**
+              ┌───────────────────────────┐
+              │        React Frontend      │
+              │  Chat UI • Uploads • Dashboard
+              └──────────────┬────────────┘
+                             │
+                             ▼
+                 ┌────────────────────┐
+                 │     FastAPI API    │
+                 │ Auth • Docs • Chat │
+                 └─────────┬──────────┘
+                           │
+                 ┌─────────▼──────────┐
+                 │     RAG Pipeline    │
+                 │ Retrieval • Prompt  │
+                 │ Multi-agent Logic   │
+                 └─────────┬──────────┘
+                           │
+               ┌──────────▼──────────┐
+               │   FAISS Vector DB    │
+               │ Per-User Indexes     │
+               └──────────┬──────────┘
+                           │
+               ┌──────────▼──────────┐
+               │   SQL Database       │
+               │ Users • Docs • Chunks│
+               │ Query Analytics      │
+               └──────────────────────┘
+
+---
+
+## 🏗️ Tech Stack
+
+### **Backend**
+- FastAPI  
+- SQLAlchemy ORM  
+- FAISS (vector search)  
+- PyMuPDF  
+- Groq LLM API  
+- Pydantic v2  
+
+### **Frontend**
+- React 18  
+- TypeScript  
+- Vite  
+- Axios  
+- Tailwind UI  
+
+---
+
+## ⚙️ Installation
+
+### 🐍 Backend
+```bash
+cd advanced-rag-backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+cd frontendrag
+npm install
+npm run dev
+
 
