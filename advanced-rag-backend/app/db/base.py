@@ -1,8 +1,28 @@
-# app/db/base.py
+# app/core/db.py
 
-from app.core.db import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Import all models so SQLAlchemy registers them
-from app.models.user import User
-from app.models.document import Document, DocumentChunk
-from app.models.analytics import QueryEvent, QueryDocument
+from app.core.config import get_settings
+
+settings = get_settings()
+
+DATABASE_URL = settings.DATABASE_URL  # ✅ now exists
+
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
