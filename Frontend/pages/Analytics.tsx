@@ -1,7 +1,7 @@
 // frontendrag/pages/Analytics.tsx
 
 import React, { useEffect, useState } from "react";
-import { apiClient } from "../services/api";
+import api from "../services/api";
 
 interface OverviewMetrics {
   total_queries?: number;
@@ -37,14 +37,15 @@ export const Analytics: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        // ✅ Use the unified api wrapper, not apiClient
         const [overviewRes, userRes] = await Promise.all([
-          apiClient.get("/analytics/overview"),
-          apiClient.get("/analytics/user"),
+          api.get<OverviewMetrics>("/analytics/overview"),
+          api.get<UserAnalytics>("/analytics/user"),
         ]);
 
-        // axios usually returns { data: ... } – but handle both shapes safely
-        setOverview((overviewRes as any).data ?? overviewRes);
-        setUserStats((userRes as any).data ?? userRes);
+        // If your api.get() already unwraps .data, these are the plain objects
+        setOverview(overviewRes ?? null);
+        setUserStats(userRes ?? null);
       } catch (err: any) {
         console.error("Failed to load analytics:", err);
         setError(err?.message || "Failed to load analytics");
