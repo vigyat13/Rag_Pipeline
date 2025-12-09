@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { api } from '../services/api';
+import api from "../services/api";
+
 import { Document, AgentMode, ChatResponse, ChatSource } from '../types';
 import { Icons } from '../components/Icons';
 import { Spinner } from '../components/ui/Spinner';
