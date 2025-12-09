@@ -10,7 +10,7 @@ email-validator==2.2.0
 passlib==1.7.4
 python-jose==3.3.0
 bcrypt==4.1.2
-
+fitz
 pydantic==1.10.14
 
 faiss-cpu==1.13.1
