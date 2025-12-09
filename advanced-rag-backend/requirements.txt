@@ -15,8 +15,6 @@ pydantic==1.10.14
 # FAISS for Windows (CPU-only)
 faiss-cpu==1.13.1
 
-
-
 # Embeddings (small footprint)
 sentence-transformers==2.5.1
 
