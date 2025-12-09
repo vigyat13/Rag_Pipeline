@@ -1,39 +1,40 @@
 # app/core/config.py
 
-from __future__ import annotations
-
+import os
 from functools import lru_cache
-from typing import Optional
-
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+from pydantic import AnyUrl
 
 
 class Settings(BaseSettings):
-    # Basic metadata
-    PROJECT_NAME: str = "Advanced RAG Backend"
+    # --- Basic app info ---
+    PROJECT_NAME: str = "RAG Pipeline"
     API_PREFIX: str = "/api"
 
-    # Auth / security
-    SECRET_KEY: str = "CHANGE_ME_IN_ENV"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    # --- Database ---
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///./app.db",   # default for local / Render free tier
+    )
 
-    # --- DATABASE CONFIG ---
-    # Your existing code (core/db.py) uses `settings.DATABASE_URL`
-    # Render / future code might use SQLALCHEMY_DATABASE_URL.
-    # So we expose BOTH, same default.
-    DATABASE_URL: str = "sqlite:///./app.db"
-    SQLALCHEMY_DATABASE_URL: str = "sqlite:///./app.db"
+    # --- Auth / JWT ---
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "change-this-in-prod")  # override in Render env
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    # LLM / Groq
-    GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    # --- LLM / Groq ---
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
-    # Embeddings
-    EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # --- Embeddings ---
+    EMBEDDING_MODEL_NAME: str = os.getenv(
+        "EMBEDDING_MODEL_NAME",
+        "sentence-transformers/all-MiniLM-L6-v2",
+    )
 
     class Config:
         env_file = ".env"
-        case_sensitive = False
+        case_sensitive = True
 
 
 @lru_cache()
