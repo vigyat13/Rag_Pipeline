@@ -1,40 +1,37 @@
-from pydantic_settings import BaseSettings
+# app/core/config.py
+
+from __future__ import annotations
+
 from functools import lru_cache
-from typing import List
+from typing import Optional
+
+from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Basic metadata
     PROJECT_NAME: str = "Advanced RAG Backend"
     API_PREFIX: str = "/api"
 
-    # DB – use Supabase Postgres connection string
-    DATABASE_URL: str
+    # Auth / security
+    SECRET_KEY: str = "CHANGE_ME_IN_ENV"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # Auth / JWT
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    # DB
+    SQLALCHEMY_DATABASE_URL: str = "sqlite:///./app.db"  # Render will store file in container
 
-    # Groq
-    GROQ_API_KEY: str
-    GROQ_MODEL_NAME: str = "llama-3.1-70b-versatile"
+    # LLM / Groq
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
 
-    # Paths
-    UPLOAD_DIR: str = "./data/uploads"
-    FAISS_DIR: str = "./data/faiss_indexes"
-
-    # CORS
-    FRONTEND_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8080",
-    ]
+    # Embeddings
+    EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        case_sensitive = False
 
 
-@lru_cache
+@lru_cache()
 def get_settings() -> Settings:
     return Settings()
