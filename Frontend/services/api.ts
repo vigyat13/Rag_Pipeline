@@ -10,7 +10,7 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
-// Low-level Axios client
+// Low-level Axios client (internal only)
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
@@ -23,7 +23,8 @@ async function unwrap<T>(
   promise: Promise<AxiosResponse<T>>
 ): Promise<T> {
   const res = await promise;
-  return res.data;
+  // Normal axios shape: { data: ... }
+  return (res.data as T) ?? (res as any);
 }
 
 /**
@@ -31,20 +32,20 @@ async function unwrap<T>(
  * All endpoints are relative to API_BASE_URL.
  */
 const api = {
-  get<T>(endpoint: string): Promise<T> {
-    return unwrap<T>(apiClient.get(endpoint));
+  get<T>(endpoint: string, config?: any): Promise<T> {
+    return unwrap<T>(apiClient.get(endpoint, config));
   },
 
-  post<T>(endpoint: string, data?: any): Promise<T> {
-    return unwrap<T>(apiClient.post(endpoint, data));
+  post<T>(endpoint: string, data?: any, config?: any): Promise<T> {
+    return unwrap<T>(apiClient.post(endpoint, data, config));
   },
 
-  put<T>(endpoint: string, data?: any): Promise<T> {
-    return unwrap<T>(apiClient.put(endpoint, data));
+  put<T>(endpoint: string, data?: any, config?: any): Promise<T> {
+    return unwrap<T>(apiClient.put(endpoint, data, config));
   },
 
-  delete<T>(endpoint: string): Promise<T> {
-    return unwrap<T>(apiClient.delete(endpoint));
+  delete<T>(endpoint: string, config?: any): Promise<T> {
+    return unwrap<T>(apiClient.delete(endpoint, config));
   },
 
   /**
@@ -62,4 +63,4 @@ const api = {
 };
 
 export default api;
-export { apiClient };
+// ❌ DO NOT export apiClient anymore
