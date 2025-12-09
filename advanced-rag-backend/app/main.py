@@ -1,4 +1,5 @@
 # app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,8 +7,8 @@ from app.core.config import get_settings
 from app.core.db import Base, engine
 from app.routers import auth, documents, chat, analytics
 
-# ✅ Import models so SQLAlchemy registers them before create_all
-from app.models import user, document  # noqa: F401
+# ✅ import models so SQLAlchemy registers tables
+from app.models import user, document, analytics as analytics_model  # noqa: F401
 
 settings = get_settings()
 
@@ -15,14 +16,17 @@ settings = get_settings()
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME)
 
+    # 🔥 THIS IS THE IMPORTANT PART – add all your frontends here
     origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    # Vercel frontend
-    "https://rag-pipeline-l99j-pn2kqnbyj-vigyat13s-projects.vercel.app/",
-     ]
+        # local dev
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        # vercel frontends
+        "https://rag-pipeline-l99j.vercel.app",
+        "https://rag-pipeline-lake.vercel.app",
+    ]
 
     app.add_middleware(
         CORSMiddleware,
@@ -32,25 +36,20 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ✅ Make sure all models (User, Document, DocumentChunk) are imported above
+    # ✅ create DB tables
     Base.metadata.create_all(bind=engine)
 
-    # ✅ Routers
+    # ✅ all API routes are under /api/...
     app.include_router(auth.router, prefix=settings.API_PREFIX)
     app.include_router(documents.router, prefix=settings.API_PREFIX)
     app.include_router(chat.router, prefix=settings.API_PREFIX)
     app.include_router(analytics.router, prefix=settings.API_PREFIX)
 
+    @app.get("/")
+    def health():
+        return {"status": "ok"}
+
     return app
 
 
 app = create_app()
-
-
-@app.get("/")
-def root():
-    return {
-        "status": "ok",
-        "service": "advanced-rag-backend",
-        "message": "Backend is running.",
-    }
