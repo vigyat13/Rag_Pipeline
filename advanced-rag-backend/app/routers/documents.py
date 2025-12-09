@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List
 
-import fitz  # PyMuPDF
+import pdfplumber
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
