@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { api } from "../services/api";
+import api from "../services/api"; // ✅ default import, no {}
 
 type User = {
   id: string;
