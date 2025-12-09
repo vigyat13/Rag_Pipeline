@@ -12,7 +12,7 @@ python-jose==3.3.0
 bcrypt==4.1.2
 fitz
 pydantic==1.10.14
-
+PyMuPDF==1.24.9
 faiss-cpu==1.13.1
 
 sentence-transformers==2.5.1
