@@ -19,64 +19,31 @@ from app.services.faiss_store import search as faiss_search
 from app.models.document import Document, DocumentChunk
 from app.services.analytics import record_query_analytics
 
-
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # ----------------------------
-# Groq client (best-effort)
+# Groq client (hard-disabled)
 # ----------------------------
-try:
-    from groq import Groq  # type: ignore
-
-    if settings.GROQ_API_KEY:
-        _groq_client: Optional[Groq] = Groq(api_key=settings.GROQ_API_KEY)
-    else:
-        logger.warning("GROQ_API_KEY not set – RAG will use fallback responses.")
-        _groq_client = None
-except Exception as e:  # ImportError or anything else
-    logger.warning("Groq client not available (%s) – using fallback responses.", e)
-    _groq_client = None
+_groq_client = None  # hard-disable Groq in cloud/demo mode
 
 
 def _call_llm(prompt: str, mode: AgentMode) -> Tuple[str, Dict[str, int]]:
     """
-    Call Groq LLM if available; otherwise return a safe dummy answer.
+    Call LLM – but since Groq is hard-disabled, always return a safe fallback.
+
+    This keeps the whole RAG pipeline (retrieval, prompts, analytics)
+    working end-to-end without relying on any external LLM provider.
     """
-    if _groq_client is None:
-        logger.info("LLM call skipped because Groq client is not configured.")
-        fallback = (
-            "LLM backend is not configured (GROQ_API_KEY missing or groq package not installed).\n"
-            "The backend pipeline is wired correctly, but you must configure Groq to get real answers."
-        )
-        return fallback, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-
-    model_name = getattr(settings, "GROQ_MODEL", None) or "llama-3.1-8b-instant"
-
-    resp = _groq_client.chat.completions.create(
-        model=model_name,
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a helpful AI assistant for a multi-document RAG system.",
-            },
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
+    logger.info("LLM call skipped because Groq client is hard-disabled.")
+    fallback = (
+        "LLM backend is disabled in this demo environment.\n"
+        "The RAG pipeline (document upload, chunking, retrieval, prompts) "
+        "ran successfully, but no actual model inference was performed.\n\n"
+        "To enable real answers, configure an LLM provider (e.g. Groq) "
+        "and wire it into `_call_llm`."
     )
-
-    message = resp.choices[0].message
-    content = message.content or ""
-
-    usage_obj = getattr(resp, "usage", None)
-    token_usage = {
-        "prompt_tokens": getattr(usage_obj, "prompt_tokens", 0),
-        "completion_tokens": getattr(usage_obj, "completion_tokens", 0),
-        "total_tokens": getattr(usage_obj, "total_tokens", 0),
-    }
-    return content, token_usage
+    return fallback, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
 
 # ----------------------------
@@ -106,7 +73,10 @@ def _retrieve_context(
     try:
         uid = uuid.UUID(str(user_id))
     except (ValueError, TypeError):
-        logger.warning("Invalid user_id %r passed to _retrieve_context; returning empty context.", user_id)
+        logger.warning(
+            "Invalid user_id %r passed to _retrieve_context; returning empty context.",
+            user_id,
+        )
         return [], []
 
     if selected_document_ids is None:
@@ -284,14 +254,13 @@ def run_rag_query(
     else:
         # --- default: standard single-shot RAG ---
         prompt = build_rag_prompt(query, context_chunks, agent_mode)
-        answer, token_usage = _call_llm(prompt, agent_mode)
+        answer, token_usage = __call_llm(prompt, agent_mode)
 
     latency_ms = (time.perf_counter() - start) * 1000.0
 
     # 3) Best-effort analytics – never crash the request
     try:
-        from app.services.analytics import record_query_analytics  # type: ignore
-
+        # (imported at top, but we use a local reference here to be explicit)
         doc_ids = list(
             {src["document_id"] for src in sources if "document_id" in src}
         )
