@@ -1,4 +1,5 @@
 // src/services/api.ts
+
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 /**
@@ -16,7 +17,7 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 /**
- * Attach Authorization header if access_token exists
+ * 🔥 Attach Authorization header if access_token exists in localStorage
  */
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
@@ -59,6 +60,9 @@ const api = {
     return unwrap<T>(apiClient.delete(endpoint, config));
   },
 
+  /**
+   * For file uploads: PDFs, docs, etc.
+   */
   postMultipart<T>(endpoint: string, formData: FormData): Promise<T> {
     return unwrap<T>(
       apiClient.post(endpoint, formData, {
