@@ -1,5 +1,4 @@
 // src/services/api.ts
-
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 /**
@@ -8,7 +7,7 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
  *  - Prod (Vercel): use VITE_API_BASE_URL in .env
  */
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://rag-pipeline-m6en.onrender.com/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 // Low-level Axios client (internal only)
 const apiClient: AxiosInstance = axios.create({
@@ -17,19 +16,31 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 /**
+ * Attach Authorization header if access_token exists
+ */
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
+    }
+  }
+  return config;
+});
+
+/**
  * Helper to unwrap Axios responses into plain data
  */
-async function unwrap<T>(
-  promise: Promise<AxiosResponse<T>>
-): Promise<T> {
+async function unwrap<T>(promise: Promise<AxiosResponse<T>>): Promise<T> {
   const res = await promise;
-  // Normal axios shape: { data: ... }
   return (res.data as T) ?? (res as any);
 }
 
 /**
  * High-level API wrapper used across the app.
- * All endpoints are relative to API_BASE_URL.
  */
 const api = {
   get<T>(endpoint: string, config?: any): Promise<T> {
@@ -48,9 +59,6 @@ const api = {
     return unwrap<T>(apiClient.delete(endpoint, config));
   },
 
-  /**
-   * For file uploads: PDFs, docs, etc.
-   */
   postMultipart<T>(endpoint: string, formData: FormData): Promise<T> {
     return unwrap<T>(
       apiClient.post(endpoint, formData, {
@@ -63,4 +71,3 @@ const api = {
 };
 
 export default api;
-// ❌ DO NOT export apiClient anymore
