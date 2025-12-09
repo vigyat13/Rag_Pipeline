@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../services/api"; // ✅ default import, no {}
+import api from "../services/api";
 
 type User = {
   id: string;
@@ -18,7 +18,9 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,24 +32,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    api
-      .get<User>("/auth/me")
-      .then((u) => setUser(u))
-      .catch(() => {
-        // token invalid / expired
+    const loadMe = async () => {
+      try {
+        const me = await api.get<User>("/auth/me");
+        setUser(me);
+      } catch (err) {
+        console.error("Failed to load /auth/me:", err);
         localStorage.removeItem("access_token");
         setUser(null);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMe();
   }, []);
 
   const login = async (accessToken: string) => {
     // 1) save token
     localStorage.setItem("access_token", accessToken);
 
-    // 2) fetch user using that token (api.ts will attach Authorization header)
-    const me = await api.get<User>("/auth/me");
-    setUser(me);
+    // 2) fetch user using that token (Authorization header is added by api.ts)
+    try {
+      const me = await api.get<User>("/auth/me");
+      setUser(me);
+    } catch (err) {
+      console.error("Login succeeded but /auth/me failed:", err);
+      localStorage.removeItem("access_token");
+      setUser(null);
+      throw err;
+    }
   };
 
   const logout = () => {
