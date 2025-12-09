@@ -3,45 +3,48 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 /**
- * Base URL:
- *  - Local dev: falls back to http://localhost:8000/api
- *  - Prod (Vercel): use VITE_API_BASE_URL in .env
+ * Determine backend base URL:
+ *  - Prod:  from VITE_API_BASE_URL
+ *  - Local: http://localhost:8000/api
  */
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+let base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
-// Low-level Axios client (internal only)
+// Normalize trailing slash
+if (!base.endsWith("/")) base = base + "/";
+
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: base,
   withCredentials: false,
 });
 
 /**
- * 🔥 Attach Authorization header if access_token exists in localStorage
+ * Attach Authorization header when JWT exists
  */
 apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
-    }
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
+
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
   }
   return config;
 });
 
 /**
- * Helper to unwrap Axios responses into plain data
+ * Clean unwrap helper
  */
-async function unwrap<T>(promise: Promise<AxiosResponse<T>>): Promise<T> {
+const unwrap = async <T>(promise: Promise<AxiosResponse<T>>): Promise<T> => {
   const res = await promise;
-  return (res.data as T) ?? (res as any);
-}
+  return res.data;
+};
 
 /**
- * High-level API wrapper used across the app.
+ * High-level API wrapper
  */
 const api = {
   get<T>(endpoint: string, config?: any): Promise<T> {
@@ -60,15 +63,11 @@ const api = {
     return unwrap<T>(apiClient.delete(endpoint, config));
   },
 
-  /**
-   * For file uploads: PDFs, docs, etc.
-   */
+  // File uploads (PDFs etc.)
   postMultipart<T>(endpoint: string, formData: FormData): Promise<T> {
     return unwrap<T>(
       apiClient.post(endpoint, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       })
     );
   },
