@@ -21,7 +21,7 @@ def create_app() -> FastAPI:
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     # Vercel frontend
-    "https://rag-pipeline-eat7-5cohr4b3f-vigyat13s-projects.vercel.app",
+    "https://rag-pipeline-l99j-pn2kqnbyj-vigyat13s-projects.vercel.app/",
      ]
 
     app.add_middleware(
