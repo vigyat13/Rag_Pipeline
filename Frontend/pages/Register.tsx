@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import api from "../services/api";
+
 import { useAuth } from '../context/AuthContext';
 import { Icons } from '../components/Icons';
 import { AuthResponse } from '../types';
