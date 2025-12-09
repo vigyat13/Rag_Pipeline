@@ -1,7 +1,10 @@
 // frontendrag/services/api.ts
-import axios, { AxiosError, AxiosResponse } from "axios";
+import axios from "axios";
 
-const BASE_URL = "https://rag-pipeline-m6en.onrender.com";
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
+  withCredentials: false,
+});
 
 // 🔹 Axios instance used everywhere
 export const apiClient = axios.create({
