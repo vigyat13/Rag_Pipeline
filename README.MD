@@ -1,150 +1,67 @@
-🚀 Advanced RAG Chat System (Multi-Document AI Assistant)
+<!-- ===================== -->
+<!--   GITHUB BANNER       -->
+<!-- ===================== -->
 
-A production-grade Retrieval-Augmented Generation (RAG) system that lets users upload documents, chat with AI over their content, and view detailed usage analytics.
-Built end-to-end with FastAPI, FAISS, Groq LLMs, React, and TypeScript.
+<p align="center">
+  <img src="https://img.shields.io/badge/ADVANCED-RAG%20SYSTEM-8A2BE2?style=for-the-badge&logo=ai" />
+</p>
 
-⭐ Key Features
-📂 Smart Document Processing
+<h1 align="center">🔍 Advanced RAG Chat System — Multi-Document AI Assistant</h1>
 
-Upload PDFs and text files
+<p align="center">
+  <strong>FastAPI • FAISS • Groq LLMs • React • TypeScript • SQLAlchemy</strong>
+</p>
 
-Automatic text extraction, chunking, embeddings
+---
 
-Per-user FAISS vector index for fast retrieval
+<details>
+<summary><h2>📘 Click to Open Full Project README</h2></summary>
 
-🤖 AI-Powered RAG Chat
+---
 
-Supports multiple agent modes:
+# 🚀 Advanced RAG Chat System  
+A production-grade **Retrieval-Augmented Generation (RAG)** platform that allows users to upload documents, query them using AI, and monitor analytics — all built using modern AI engineering practices.
 
-Default → direct answer from retrieved context
+---
 
-Research Mode → planner agent + multi-step synthesis
+## ⭐ **Features**
 
-Summarizer → structured summaries
+### 📂 Document Intelligence
+- Upload PDFs / text files  
+- Automatic text extraction (PyMuPDF)  
+- Smart document chunking  
+- Embedding generation  
+- Per-user **FAISS vector index**  
+- real-time RAG retrieval  
 
-Brainstorm → creative idea generation
+### 🤖 Multi-Agent AI Chat
+Supports 4 powerful modes:
+| Mode | What it Does |
+|------|--------------|
+| **Default** | Direct RAG-grounded answer |
+| **Research** | Planner → multi-step reasoning → synthesis |
+| **Summarizer** | Structured, concise summaries |
+| **Brainstorm** | Generates ideas, suggestions, next steps |
 
-Returns:
+Outputs:
+- Answer  
+- Source snippets  
+- Token usage  
+- Latency  
 
-Answer
+---
 
-Relevant document snippets
+## 📊 Analytics Dashboard  
+Monitors:
+- Total queries  
+- Token usage  
+- Average latency  
+- Query history  
+- Document interactions  
 
-Token usage
+Perfect for debugging and evaluating RAG performance.
 
-Latency metrics
+---
 
-📊 Built-in Analytics Dashboard
+## 🧠 **System Architecture**
 
-Total queries
-
-Token consumption
-
-Average latency
-
-Full query history with modes & documents used
-
-🏗️ Tech Stack
-Backend
-
-FastAPI
-
-SQLAlchemy
-
-SQLite/Postgres
-
-FAISS
-
-PyMuPDF (text extraction)
-
-Groq LLM API (Llama models)
-
-Frontend
-
-React + TypeScript
-
-Vite
-
-Axios
-
-Tailwind UI components
-
-🧠 Architecture Overview
-User → React Frontend → FastAPI Backend → RAG Pipeline → Groq LLM
-           ↑                   ↓
-      Analytics Page ← Query Analytics DB
-
-🚀 How It Works
-
-User uploads a document
-→ Extract text → Chunk → Embed → Store in FAISS + DB
-
-User asks a question
-→ Embed query → Retrieve top-K chunks → Build prompt → LLM answers
-
-System logs analytics
-→ latency, tokens, mode, docs used
-
-flowchart LR
-    subgraph Frontend (React / Vite)
-        U[User Browser]
-        D[Documents Page]
-        C[Chat Page]
-        A[Analytics Page]
-    end
-
-    subgraph Backend (FastAPI)
-        Auth[Auth Router /api/auth/*]
-        Docs[Documents Router /api/documents/*]
-        Chat[Chat Router /api/chat/query]
-        An[Analytics Router /api/analytics/*]
-
-        subgraph Services
-            Chunk[PDF Text Extract + Chunker]
-            Emb[Embeddings Service]
-            Faiss[FAISS Index]
-            RAG[rag_pipeline.py]
-            Agents[agents.py]
-            AnalyticsSvc[analytics.py]
-        end
-
-        subgraph DB (SQLite / Postgres)
-            Users[(users)]
-            Documents[(documents)]
-            Chunks[(document_chunks)]
-            QAnalytics[(query_analytics)]
-        end
-    end
-
-    U --> D --> Docs
-    U --> C --> Chat
-    U --> A --> An
-
-    Docs --> Chunk --> Emb --> Faiss
-    Chunk --> Chunks
-    Docs --> Documents
-
-    Chat --> RAG --> Faiss
-    RAG --> Agents
-    RAG --> AnalyticsSvc --> QAnalytics
-    Auth --> Users
-
-📸 UI Screens
-
-Documents page | Chat interface | Analytics dashboard
-(Include screenshots here for recruiters)
-
-📦 Run Locally
-# Backend
-cd advanced-rag-backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# Frontend
-cd frontendrag
-npm install
-npm run dev
-
-🧑‍💻 About the Developer
-
-This project demonstrates skills in LLM engineering, backend architecture, vector search, MLOps principles, and full-stack UI development—built for real-world AI product workflows.
