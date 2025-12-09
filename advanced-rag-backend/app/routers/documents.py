@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.models.document import Document, DocumentChunk  # ✅ import both
+from app.models.document import Document, DocumentChunk
 from app.models.user import User
 from app.routers.dependencies import get_current_user
 from app.schemas.documents import DocumentListResponse, DocumentResponse
@@ -43,11 +43,21 @@ def _ensure_upload_dir(user_id: uuid.UUID) -> str:
 # ------------------------------
 
 def _extract_text_from_pdf(path: str) -> str:
-    doc = fitz.open(path)
+    """
+    Extract text from a PDF using pdfplumber (no PyMuPDF/fitz dependency).
+    """
     parts: List[str] = []
-    for page in doc:
-        parts.append(page.get_text() or "")
-    text = "\n".join(parts)
+    try:
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text() or ""
+                if text.strip():
+                    parts.append(text)
+    except Exception as e:
+        logger.warning("Failed to parse PDF %s with pdfplumber: %s", path, e)
+        return ""
+
+    text = "\n\n".join(parts)
     logger.info("PDF text extracted from %s, length=%d chars", path, len(text))
     return text
 
@@ -193,7 +203,7 @@ async def upload_documents(
                 id=uuid.uuid4(),
                 document_id=doc.id,
                 user_id=user_id,
-                chunk_index=idx,  # ✅ integer to match model
+                chunk_index=idx,
                 text=chunk_text,
                 created_at=datetime.utcnow(),
             )
@@ -243,7 +253,6 @@ def list_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    # ✅ use the model, not the variable name
     docs = (
         db.query(Document)
         .filter(
@@ -280,7 +289,6 @@ def delete_document(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid document_id")
 
-    # ✅ use Document model here too
     doc = (
         db.query(Document)
         .filter(
