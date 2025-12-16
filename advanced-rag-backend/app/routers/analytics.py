@@ -1,4 +1,3 @@
-# app/routers/analytics.py
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -48,7 +47,8 @@ def user_analytics(
     """
     rows: List[QueryAnalytics] = (
         db.query(QueryAnalytics)
-        .filter(QueryAnalytics.user_id == current_user.id)
+        # FIX: Convert UUID to str() so Postgres compares String to String
+        .filter(QueryAnalytics.user_id == str(current_user.id))
         .order_by(QueryAnalytics.created_at.desc())
         .limit(20)
         .all()
