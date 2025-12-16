@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List
 
+import numpy as np  # Added for vector conversion
 import pdfplumber
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -17,7 +18,8 @@ from app.models.user import User
 from app.routers.dependencies import get_current_user
 from app.schemas.documents import DocumentListResponse, DocumentResponse
 from app.services.embeddings import embed_texts
-from app.services.faiss_store import add_embeddings
+# Imported clear_user_index for the fix
+from app.services.faiss_store import add_embeddings, clear_user_index
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +218,9 @@ async def upload_documents(
 
         # Embed + FAISS
         texts_for_embed = [c.text for c in chunk_rows]
-        vectors = embed_texts(texts_for_embed)
+        # FIX: Ensure vectors are numpy array for FAISS
+        vectors = np.array(embed_texts(texts_for_embed))
+        
         metadatas = [
             {
                 "chunk_id": str(ch.id),
@@ -226,7 +230,9 @@ async def upload_documents(
             }
             for ch in chunk_rows
         ]
-        add_embeddings(user_id=str(user_id), vectors=vectors, metadatas=metadatas)
+        
+        # FIX: Match arguments to faiss_store.py (user_id as UUID, embeddings param)
+        add_embeddings(user_id=user_id, embeddings=vectors, metadatas=metadatas)
 
         # Update num_chunks
         doc.num_chunks = len(chunk_rows)
@@ -278,12 +284,16 @@ def list_documents(
     }
 
 
-@router.delete("/{document_id}", response_model=DocumentResponse)
+@router.delete("/{document_id}")
 def delete_document(
     document_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Dict[str, Any]:
+):
+    """
+    Deletes a document from the DB and clears the user's FAISS index.
+    This prevents 'Ghost Memory' where the AI remembers deleted files.
+    """
     try:
         doc_uuid = uuid.UUID(document_id)
     except ValueError:
@@ -300,16 +310,12 @@ def delete_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    doc.is_deleted = True
-    db.add(doc)
+    # 1. Hard Delete from Database
+    db.delete(doc)
     db.commit()
-    db.refresh(doc)
 
-    return {
-        "id": str(doc.id),
-        "filename": doc.filename,
-        "size_bytes": doc.size_bytes,
-        "content_type": doc.content_type,
-        "created_at": doc.created_at.isoformat(),
-        "num_chunks": doc.num_chunks or 0,
-    }
+    # 2. NUCLEAR FIX: Clear the Search Index to remove "Ghost Data"
+    # This ensures no data from this deleted file remains in memory.
+    clear_user_index(current_user.id)
+
+    return {"message": "Document deleted and search index cleared. Please re-upload other documents if needed."}
