@@ -1,5 +1,3 @@
-# app/core/config.py
-
 from functools import lru_cache
 from typing import List
 
@@ -17,6 +15,9 @@ class Settings(BaseSettings):
 
     # DB
     DATABASE_URL: str = "sqlite:///./rag_pipeline.db"
+
+    # AI / LLM
+    GROQ_API_KEY: str  # <--- Added this field so the app can read the Env Var
 
     class Config:
         env_file = ".env"
