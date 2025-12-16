@@ -35,10 +35,12 @@ def _call_llm(prompt: str, mode: AgentMode) -> Tuple[str, Dict[str, int]]:
     """
     # Select model based on agent_mode
     # You can customize these model names if Groq updates them
+  # Select model based on agent_mode
+    # Updated to Llama 3.1/3.3 models (Current as of late 2024/2025)
     if mode == AgentMode.research:
-        model_name = "llama3-70b-8192"  # Smarter model for research
+        model_name = "llama-3.3-70b-versatile"  # Smarter, latest model
     else:
-        model_name = "llama3-8b-8192"   # Faster model for chat
+        model_name = "llama-3.1-8b-instant"     # Extremely fast model  # Faster model for chat
 
     try:
         completion = client.chat.completions.create(
