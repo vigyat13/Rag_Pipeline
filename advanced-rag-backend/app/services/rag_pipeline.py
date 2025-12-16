@@ -14,8 +14,9 @@ from app.schemas.chat import AgentMode
 from app.services.agents import plan_research_steps, build_rag_prompt
 
 # Retrieval imports
-from app.services.embeddings import embed_query
-from app.services.faiss_store import search as faiss_search
+from app.services.embeddings import embed_texts
+# FIX: Import 'search_index' instead of 'search'
+from app.services.faiss_store import search_index as faiss_search
 from app.models.document import Document, DocumentChunk
 from app.services.analytics import record_query_analytics
 
@@ -26,7 +27,7 @@ settings = get_settings()
 # Groq Setup (Enabled)
 # ----------------------------
 # Ensure GROQ_API_KEY is set in your Render Env Vars
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key=settings.GROQ_API_KEY)
 
 
 def _call_llm(prompt: str, mode: AgentMode) -> Tuple[str, Dict[str, int]]:
@@ -34,13 +35,11 @@ def _call_llm(prompt: str, mode: AgentMode) -> Tuple[str, Dict[str, int]]:
     Real call to Groq LLM.
     """
     # Select model based on agent_mode
-    # You can customize these model names if Groq updates them
-  # Select model based on agent_mode
     # Updated to Llama 3.1/3.3 models (Current as of late 2024/2025)
     if mode == AgentMode.research:
         model_name = "llama-3.3-70b-versatile"  # Smarter, latest model
     else:
-        model_name = "llama-3.1-8b-instant"     # Extremely fast model  # Faster model for chat
+        model_name = "llama-3.1-8b-instant"     # Extremely fast model
 
     try:
         completion = client.chat.completions.create(
@@ -102,18 +101,20 @@ def _retrieve_context(
 
     # 1) Embed query
     try:
-        q_vec = embed_query(query)
+        # embed_texts returns a list of vectors, take the first one
+        query_vectors = embed_texts([query])
+        q_vec = query_vectors[0]
     except Exception as e:
         logger.warning(f"Failed to embed query: {e}")
         return [], []
 
     # 2) FAISS search
     try:
+        # We use 'search_index' which is imported as 'faiss_search'
         faiss_results = faiss_search(
-            user_id=uid,
-            query_vec=q_vec,
-            top_k=top_k,
-            filter_doc_ids=selected_document_ids or None,
+            user_id=str(uid),
+            query_vector=q_vec,
+            top_k=top_k
         )
     except Exception as e:
         logger.warning(f"FAISS search failed: {e}")
@@ -123,38 +124,34 @@ def _retrieve_context(
         return [], []
 
     # 3) Collect chunk IDs and fetch text from DB
-    chunk_ids: List[uuid.UUID] = []
-    for r in faiss_results:
-        cid = r.get("chunk_id")
-        if cid:
-            try:
-                chunk_ids.append(uuid.UUID(str(cid)))
-            except (ValueError, TypeError):
-                continue
-
-    if not chunk_ids:
-        return [], []
-
-    rows = (
-        db.query(DocumentChunk, Document)
-        .join(Document, DocumentChunk.document_id == Document.id)
-        .filter(DocumentChunk.id.in_(chunk_ids))
-        .all()
-    )
-
+    # faiss_results is a list of dicts: {'score': float, 'metadata': dict}
+    # metadata contains 'chunk_id', 'document_id', 'text', etc.
+    
     context_chunks: List[str] = []
     sources: List[Dict[str, Any]] = []
 
-    for ch, doc in rows:
-        if not ch.text:
+    # Filter by selected_document_ids if provided
+    # Convert selected_document_ids to set of strings for faster lookup
+    selected_ids_set = set(str(d) for d in selected_document_ids) if selected_document_ids else None
+
+    for res in faiss_results:
+        meta = res["metadata"]
+        doc_id = meta.get("document_id")
+        
+        # If filtering is active and this doc is not selected, skip
+        if selected_ids_set and str(doc_id) not in selected_ids_set:
             continue
-        context_chunks.append(ch.text)
-        sources.append({
-            "id": str(ch.id),
-            "document_id": str(doc.id),
-            "filename": doc.filename,
-            "snippet": ch.text[:300],
-        })
+            
+        text = meta.get("text", "")
+        if text:
+            context_chunks.append(text)
+            sources.append({
+                "id": meta.get("chunk_id"),
+                "document_id": doc_id,
+                "filename": meta.get("filename", "Unknown"),
+                "snippet": text[:300],
+                "score": res["score"]
+            })
 
     return context_chunks, sources
 
@@ -230,7 +227,6 @@ def run_rag_query(
     else:
         # Standard RAG
         prompt = build_rag_prompt(query, context_chunks, agent_mode)
-        # FIX IS HERE: Changed __call_llm to _call_llm
         answer, token_usage = _call_llm(prompt, agent_mode)
 
     latency_ms = (time.perf_counter() - start) * 1000.0
